@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>西游记剧本杀 - 取经路上的爱恨纠葛</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gradient-to-br from-amber-50 via-orange-50 to-red-50 min-h-screen">
+    <!-- 背景装饰 -->
+    <div class="fixed inset-0 overflow-hidden pointer-events-none opacity-10">
+        <div class="absolute top-10 left-10 text-9xl">☁️</div>
+        <div class="absolute top-40 right-20 text-9xl">☁️</div>
+        <div class="absolute bottom-20 left-1/4 text-9xl">☁️</div>
+    </div>
+
+    <!-- 主容器 -->
+    <div class="relative z-10 container mx-auto px-4 py-8 max-w-7xl">
+        <!-- 标题区域 -->
+        <header class="text-center mb-12 animate-fade-in">
+            <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 mb-4 drop-shadow-lg">
+                西游记剧本杀
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-700 font-medium">取经路上的爱恨纠葛</p>
+            <div class="mt-4 flex items-center justify-center gap-2 text-gray-600">
+                <i class="fas fa-book-open"></i>
+                <span>在游戏中学习名著，感受经典魅力</span>
+            </div>
+        </header>
+
+        <!-- 游戏阶段容器 -->
+        <div id="gameContainer" class="space-y-8">
+            <!-- 角色选择阶段 -->
+            <section id="characterSelection" class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">
+                    <i class="fas fa-users text-orange-600 mr-3"></i>
+                    选择你的角色
+                </h2>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="characterGrid">
+                    <!-- 角色卡片将由JS动态生成 -->
+                </div>
+
+                <div class="text-center">
+                    <button id="startGameBtn" disabled class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-4 rounded-full text-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                        <i class="fas fa-play mr-2"></i>
+                        开始冒险
+                    </button>
+                </div>
+            </section>
+
+            <!-- 游戏进行阶段 -->
+            <section id="gamePlay" class="hidden">
+                <!-- 进度条 -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-lg font-semibold text-gray-700">
+                            <i class="fas fa-map-marked-alt text-orange-600 mr-2"></i>
+                            取经进度
+                        </span>
+                        <span class="text-lg font-bold text-orange-600" id="stepCounter">第 1/9 步</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                        <div id="progressBar" class="bg-gradient-to-r from-orange-500 to-red-500 h-4 rounded-full transition-all duration-500 shadow-inner" style="width: 11.11%"></div>
+                    </div>
+                </div>
+
+                <!-- 当前角色信息 -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-6 mb-6">
+                    <div class="flex items-center gap-4">
+                        <img id="currentCharacterAvatar" src="" alt="" class="w-20 h-20 rounded-full object-cover border-4 border-orange-500 shadow-lg">
+                        <div class="flex-1">
+                            <h3 class="text-2xl font-bold text-gray-800" id="currentCharacterName"></h3>
+                            <p class="text-gray-600" id="currentCharacterRole"></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 故事内容区 -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6">
+                    <div class="mb-6">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-scroll text-orange-600 mr-3"></i>
+                            <span id="storyTitle">故事开始</span>
+                        </h3>
+                        <div id="storyContent" class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                            <!-- 故事内容将由JS动态生成 -->
+                        </div>
+                    </div>
+
+                    <!-- 优美语句提示 -->
+                    <div id="literaryQuote" class="hidden bg-gradient-to-r from-amber-50 to-orange-50 border-l-4 border-orange-500 p-4 rounded-r-lg">
+                        <p class="text-sm text-gray-600 mb-1">
+                            <i class="fas fa-quote-left text-orange-500 mr-2"></i>
+                            <strong>优美语句学习：</strong>
+                        </p>
+                        <p class="text-gray-800 italic" id="quoteText"></p>
+                    </div>
+                </div>
+
+                <!-- 选项区域 -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8 mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-hand-pointer text-orange-600 mr-2"></i>
+                        你的选择
+                    </h3>
+                    <div id="optionsContainer" class="space-y-3">
+                        <!-- 选项将由JS动态生成 -->
+                    </div>
+                </div>
+
+                <!-- 自由输入区 -->
+                <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-pen-fancy text-orange-600 mr-2"></i>
+                        自由发挥
+                    </h3>
+                    <div class="flex gap-3">
+                        <input 
+                            type="text" 
+                            id="customInput" 
+                            placeholder="输入你的想法或行动..." 
+                            class="flex-1 px-6 py-4 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none text-lg transition-colors"
+                        >
+                        <button id="submitCustomBtn" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-4 rounded-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            提交
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 游戏结束阶段 -->
+            <section id="gameEnd" class="hidden bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12 text-center">
+                <div class="mb-8">
+                    <i class="fas fa-trophy text-yellow-500 text-7xl mb-4"></i>
+                    <h2 class="text-4xl font-bold text-gray-800 mb-4">取经之路圆满</h2>
+                    <p class="text-xl text-gray-600 mb-6" id="endingText"></p>
+                </div>
+
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-2xl p-6 mb-8">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">
+                        <i class="fas fa-star text-orange-600 mr-2"></i>
+                        你的收获
+                    </h3>
+                    <div id="learningPoints" class="text-left space-y-2">
+                        <!-- 学习要点将由JS动态生成 -->
+                    </div>
+                </div>
+
+                <button id="restartBtn" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-12 py-4 rounded-full text-xl font-bold shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-300">
+                    <i class="fas fa-redo mr-2"></i>
+                    重新开始
+                </button>
+            </section>
+        </div>
+
+    </div>
+
+    <!-- 加载提示 -->
+    <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+        <div class="bg-white rounded-2xl p-8 shadow-2xl text-center">
+            <div class="animate-spin text-6xl mb-4">🌀</div>
+            <p class="text-xl font-bold text-gray-800">故事生成中...</p>
+            <p class="text-gray-600 mt-2">智能体正在为你编织精彩的冒险</p>
+        </div>
+    </div>
+
+    <script type="module" src="main.js"></script>
+</body>
+</html>
