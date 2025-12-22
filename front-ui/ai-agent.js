@@ -135,7 +135,7 @@ function getDefaultCharacters() {
             id: 'wukong',
             name: '孙悟空',
             role: '齐天大圣',
-            avatar: 'https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/a4a893ce-082e-4d73-a0ee-66431bb8db38/image_1766338055_1_3.jpg',
+            avatar: 'http://49.232.166.157:8002/assets/wukong_small.png',
             description: '神通广大的美猴王',
             background: '花果山水帘洞美猴王，曾大闹天宫。',
             secret: '头戴紧箍咒，内心渴望自由。',

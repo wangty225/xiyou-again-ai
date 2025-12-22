@@ -317,7 +317,7 @@ function closeChapterModal() {
  * 选择章节并加载角色
  */
 async function selectChapter(chapterId) {
-    showLoading(true, '正在生成角色列表...');
+    showLoading(true, '正在生成角色列表...（约需15s）');
     
     try {
         const chapter = gameState.chapters.find(c => c.id === chapterId);

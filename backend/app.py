@@ -74,7 +74,7 @@ def get_chapter_list():
     logger.info(f"Found {len(chapters)} chapters")
     # 按章节号排序
     chapters.sort(key=lambda x: x['id'])
-    logger.info(f"Chapters: {chapters}")
+#     logger.info(f"Chapters: {chapters}")
     return chapters
 
 
@@ -155,7 +155,7 @@ def build_character_generation_prompt(chapter_id, chapter_title):
 {chapter_summary}
 
 ## 输出要求
-请根据章节内容，选择3-5个适合该章节剧情的角色。每个角色需要包含以下信息：
+请根据章节内容，选择3～5个最适合该章节剧情的角色，（按照关联度高到低排序，不要多于5个）。每个角色需要包含以下信息：
 - id: 角色唯一标识（英文）
 - name: 角色名称
 - role: 角色身份
@@ -168,7 +168,7 @@ def build_character_generation_prompt(chapter_id, chapter_title):
 
 ## 预设头像URL对照
 - 唐僧: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/648a8ed9-45dc-4428-89d7-c398040ea606/image_1766338050_1_1.jpg
-- 孙悟空: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/a4a893ce-082e-4d73-a0ee-66431bb8db38/image_1766338055_1_3.jpg
+- 孙悟空: http://49.232.166.157:8002/assets/wukong_small.png
 - 猪八戒: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/528d382e-af15-477f-9bc8-3fb9cd359934/image_1766338060_1_1.jpg
 - 沙悟净: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/b47a2824-3c54-4ee5-8992-50361ff33ac9/image_1766338064_1_1.jpg
 - 白龙马: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/814abf7c-df54-476a-bdb5-22fdbcef5e89/image_1766338069_1_1.jpg
@@ -188,16 +188,16 @@ def build_character_generation_prompt(chapter_id, chapter_title):
             "avatar": "头像URL",
             "description": "角色简介",
             "background": "角色背景",
-            "secret": "角色秘密",
+            "secret": "角色终极目标",
             "traits": ["慈悲", "执着", "善良"],
             "color": "from-yellow-400 to-orange-500"
         }}
     ],
-    "chapterContext": "章节剧情概要（100字以内）"
+    "chapterContext": "章节剧情概要标题，【第5回：大闹天宫】"
 }}
 ```
 
-请直接输出JSON，不要输出其他内容："""
+请直接输出JSON，不要输出其他内容，不要走思考模型，尽可能快速总结输出"""
     
     return prompt
 
@@ -460,7 +460,15 @@ def extract_json(content: str) -> dict:
             return json.loads(match)
         except:
             continue
-    
+
+    matches2 = re.search(r'```json\s*([\s\S]*?)\s*```', content)
+    if matches2:
+        try:
+            return json.loads(matches2.group(1))
+        except:
+            pass
+
+    logger.info(f"Failed to extract JSON from content: {content}")
     # 如果都失败了，返回默认结构
     return {
         "title": "故事继续",
@@ -550,6 +558,7 @@ def get_chapter_characters(chapter_id):
         
         if response.status_code != HTTPStatus.OK:
             logger.error(f"AI call failed: {response.message}")
+            logger.info(f"AI call failed: {response.message}")
             # 返回默认角色列表
             return jsonify({
                 'success': True,
@@ -560,6 +569,7 @@ def get_chapter_characters(chapter_id):
         
         # 解析AI响应
         content = response.output.text
+        logger.info(f"AI response characters: {content}")
         parsed_data = extract_json(content)
         
         return jsonify({
@@ -600,7 +610,7 @@ def get_default_characters(chapter_id, chapter_title):
             "id": "wukong",
             "name": "孙悟空",
             "role": "齐天大圣",
-            "avatar": "https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/a4a893ce-082e-4d73-a0ee-66431bb8db38/image_1766338055_1_3.jpg",
+            "avatar": "http://49.232.166.157:8002/assets/wukong_small.png",
             "description": "神通广大的美猴王，火眼金睛识妖魔",
             "background": f"在第{chapter_id}回《{chapter_title}》中，悟空保护师父继续西行。",
             "secret": "头戴紧箍咒，受制于唐僧，但内心渴望自由。",
