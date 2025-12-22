@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>西游记剧本杀 - 取经路上的爱恨纠葛</title>
+    <title>AI话西游 - 取经路上的爱恨纠葛</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
@@ -21,7 +21,7 @@
         <!-- 标题区域 -->
         <header class="text-center mb-12 animate-fade-in">
             <h1 class="text-5xl md:text-6xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-red-600 via-orange-600 to-yellow-600 mb-4 drop-shadow-lg">
-                西游记剧本杀
+                AI话西游
             </h1>
             <p class="text-xl md:text-2xl text-gray-700 font-medium">取经路上的爱恨纠葛</p>
             <div class="mt-4 flex items-center justify-center gap-2 text-gray-600">
@@ -32,12 +32,46 @@
 
         <!-- 游戏阶段容器 -->
         <div id="gameContainer" class="space-y-8">
+            
+            <!-- 章节选择阶段 -->
+            <section id="chapterSelection" class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12">
+                <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">
+                    <i class="fas fa-book text-orange-600 mr-3"></i>
+                    选择章节
+                </h2>
+                <p class="text-center text-gray-600 mb-8">
+                    《西游记》共一百回，选择你想体验的章节开始冒险
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8 max-h-[600px] overflow-y-auto pr-2" id="chapterGrid">
+                    <!-- 章节卡片将由JS动态生成 -->
+                    <div class="text-center py-8 col-span-full">
+                        <i class="fas fa-spinner fa-spin text-4xl text-orange-500"></i>
+                        <p class="mt-4 text-gray-600">正在加载章节列表...</p>
+                    </div>
+                </div>
+            </section>
+
             <!-- 角色选择阶段 -->
-            <section id="characterSelection" class="bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12">
-                <h2 class="text-3xl font-bold text-center mb-8 text-gray-800">
+            <section id="characterSelection" class="hidden bg-white/90 backdrop-blur-sm rounded-3xl shadow-2xl p-8 md:p-12">
+                <div class="flex items-center justify-between mb-6">
+                    <button id="backToChapters" class="text-gray-600 hover:text-orange-600 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>返回章节列表
+                    </button>
+                    <div id="selectedChapterInfo" class="text-orange-600 font-bold"></div>
+                </div>
+                
+                <h2 class="text-3xl font-bold text-center mb-4 text-gray-800">
                     <i class="fas fa-users text-orange-600 mr-3"></i>
                     选择你的角色
                 </h2>
+                
+                <!-- 章节上下文提示 -->
+                <div class="bg-gradient-to-r from-amber-50 to-orange-50 rounded-xl p-4 mb-8 text-center">
+                    <p class="text-gray-700" id="chapterContextText">
+                        根据所选章节，AI已为你生成了合适的角色
+                    </p>
+                </div>
                 
                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8" id="characterGrid">
                     <!-- 角色卡片将由JS动态生成 -->
@@ -85,9 +119,27 @@
                             <i class="fas fa-scroll text-orange-600 mr-3"></i>
                             <span id="storyTitle">故事开始</span>
                         </h3>
-                        <div id="storyContent" class="prose prose-lg max-w-none text-gray-700 leading-relaxed">
+                        <div id="storyContent" class="prose prose-lg max-w-none text-gray-700 leading-relaxed min-h-[150px]">
                             <!-- 故事内容将由JS动态生成 -->
                         </div>
+                    </div>
+
+                    <!-- 反馈提示框（用户选择不合理时显示） -->
+                    <div id="feedbackBox" class="hidden bg-gradient-to-r from-yellow-50 to-amber-50 border-l-4 border-yellow-500 p-4 rounded-r-lg mb-4">
+                        <p class="text-sm text-yellow-700 mb-1">
+                            <i class="fas fa-lightbulb text-yellow-500 mr-2"></i>
+                            <strong>小提示：</strong>
+                        </p>
+                        <p class="text-yellow-800" id="feedbackText"></p>
+                    </div>
+
+                    <!-- 原著情节参考框 -->
+                    <div id="originalPlotBox" class="hidden bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-500 p-4 rounded-r-lg mb-4">
+                        <p class="text-sm text-blue-700 mb-1">
+                            <i class="fas fa-book-reader text-blue-500 mr-2"></i>
+                            <strong>原著情节：</strong>
+                        </p>
+                        <p class="text-blue-800" id="originalPlotText"></p>
                     </div>
 
                     <!-- 优美语句提示 -->
@@ -105,6 +157,7 @@
                     <h3 class="text-xl font-bold text-gray-800 mb-4">
                         <i class="fas fa-hand-pointer text-orange-600 mr-2"></i>
                         你的选择
+                        <span class="text-sm font-normal text-gray-500 ml-2">(推荐选择符合原著的选项)</span>
                     </h3>
                     <div id="optionsContainer" class="space-y-3">
                         <!-- 选项将由JS动态生成 -->
@@ -113,10 +166,11 @@
 
                 <!-- 自由输入区 -->
                 <div class="bg-white/90 backdrop-blur-sm rounded-2xl shadow-xl p-8">
-                    <h3 class="text-xl font-bold text-gray-800 mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">
                         <i class="fas fa-pen-fancy text-orange-600 mr-2"></i>
                         自由发挥
                     </h3>
+                    <p class="text-sm text-gray-500 mb-4">输入自定义行动（注意：自定义输入可能偏离原著情节）</p>
                     <div class="flex gap-3">
                         <input 
                             type="text" 
@@ -159,15 +213,37 @@
 
     </div>
 
+    <!-- 章节内容模态框 -->
+    <div id="chapterModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <div class="flex items-center justify-between p-6 border-b">
+                <h3 class="text-2xl font-bold text-gray-800" id="chapterModalTitle">章节标题</h3>
+                <button id="closeChapterModal" class="text-gray-500 hover:text-gray-700 text-2xl">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6" id="chapterModalContent">
+                <!-- 章节内容 -->
+            </div>
+            <div class="p-6 border-t flex justify-end gap-4">
+                <button id="startFromChapter" class="bg-gradient-to-r from-orange-500 to-red-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg hover:shadow-xl transition-all">
+                    <i class="fas fa-play mr-2"></i>
+                    从本章开始游戏
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- 加载提示 -->
     <div id="loadingOverlay" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
         <div class="bg-white rounded-2xl p-8 shadow-2xl text-center">
             <div class="animate-spin text-6xl mb-4">🌀</div>
-            <p class="text-xl font-bold text-gray-800">故事生成中...</p>
-            <p class="text-gray-600 mt-2">智能体正在为你编织精彩的冒险</p>
+            <p class="text-xl font-bold text-gray-800">加载中...</p>
         </div>
     </div>
 
     <script type="module" src="main.js"></script>
+    <!-- 调试工具（生产环境可删除） -->
+    <script src="debug.js"></script>
 </body>
 </html>
