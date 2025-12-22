@@ -270,7 +270,7 @@ tail -f backend/logs/app.log
 ```
 
 ### 测试指南
-详见 [TESTING_GUIDE.md](TESTING_GUIDE.md)
+详见 [TESTING_GUIDE.md](_doc/TESTING_GUIDE.md)
 
 ---
 
