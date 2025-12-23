@@ -739,10 +739,13 @@ async function loadStoryStream(userChoice = null) {
     if (elements.customInput) elements.customInput.disabled = true;
     if (elements.submitCustomBtn) elements.submitCustomBtn.disabled = true;
 
+    // 提前先更新进度
+    updateProgress();
+
     try {
         let streamedText = '';
         let lastParsedData = null;
-        
+
         await callAIAgentStream(
             {
                 character: gameState.selectedCharacter,
@@ -784,9 +787,6 @@ async function loadStoryStream(userChoice = null) {
             waitForTypingComplete(() => {
                 // 只渲染选项和其他元素，不重新渲染内容（保留打字机效果）
                 renderStoryElements(storyData);
-                
-                // 更新进度
-                updateProgress();
 
                 // 检查是否结束（第9步）
                 if (gameState.currentStep >= gameState.maxSteps || storyData.isEnd) {
@@ -1185,9 +1185,6 @@ async function loadStoryFallback(userChoice = null) {
 
         // 渲染故事
         renderStory(storyData);
-
-        // 更新进度
-        updateProgress();
 
         // 检查是否结束
         if (gameState.currentStep >= gameState.maxSteps || storyData.isEnd) {
