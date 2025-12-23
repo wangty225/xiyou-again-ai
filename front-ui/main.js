@@ -22,6 +22,8 @@ const gameState = {
     isPlaying: false,
     isStreaming: false,       // 是否正在流式输出
     isLoading: false,         // 是否正在加载
+    isLoadingAICharacters: false, // 是否正在加载AI推荐角色
+    aiRecommendedCharacters: [],  // AI推荐的角色列表
     chapterContext: '',       // 章节上下文
     typewriterQueue: [],      // 打字机队列
     isTyping: false,          // 是否正在打字
@@ -51,6 +53,7 @@ const elements = {
     selectedChapterInfo: document.getElementById('selectedChapterInfo'),
     chapterContextText: document.getElementById('chapterContextText'),
     // 游戏进行
+    currentChapterTitle: document.getElementById('currentChapterTitle'),
     stepCounter: document.getElementById('stepCounter'),
     progressBar: document.getElementById('progressBar'),
     currentCharacterAvatar: document.getElementById('currentCharacterAvatar'),
@@ -58,6 +61,7 @@ const elements = {
     currentCharacterRole: document.getElementById('currentCharacterRole'),
     storyTitle: document.getElementById('storyTitle'),
     storyContent: document.getElementById('storyContent'),
+    characterNotInChapterTip: document.getElementById('characterNotInChapterTip'),
     feedbackBox: document.getElementById('feedbackBox'),
     feedbackText: document.getElementById('feedbackText'),
     originalPlotBox: document.getElementById('originalPlotBox'),
@@ -317,8 +321,6 @@ function closeChapterModal() {
  * 选择章节并加载角色
  */
 async function selectChapter(chapterId) {
-    showLoading(true, '正在生成角色列表...（约需15s）');
-    
     try {
         const chapter = gameState.chapters.find(c => c.id === chapterId);
         if (!chapter) {
@@ -327,27 +329,171 @@ async function selectChapter(chapterId) {
         
         gameState.selectedChapter = chapter;
         
-        // 获取AI生成的角色列表
-        const result = await fetchChapterCharacters(chapterId);
-        if (result.success && result.characters) {
-            gameState.characters = result.characters;
-            gameState.chapterContext = result.chapterContext || '';
-        } else {
-            // 使用默认角色
-            gameState.characters = defaultCharacters;
-        }
+        // 显示10秒加载动画
+        showChapterLoadingScreen(chapter);
         
-        // 渲染角色并切换到角色选择界面
+        // 同时开始请求AI角色
+        gameState.aiRecommendedCharacters = [];
+        gameState.isLoadingAICharacters = true; // 标记正在加载AI角色
+        
+        const aiCharactersPromise = fetchChapterCharacters(chapterId);
+        
+        // 等待10秒后跳转到角色选择页
+        await new Promise(resolve => setTimeout(resolve, 10000));
+        
+        // 隐藏加载动画
+        hideChapterLoadingScreen();
+        
+        // 设置初始角色列表（2个loading占位 + 默认角色）
+        gameState.characters = [...defaultCharacters];
         renderCharacters();
         updateSelectedChapterInfo();
         showPhase('characterSelection');
         
+        // 处理AI角色请求结果
+        aiCharactersPromise.then(result => {
+            gameState.isLoadingAICharacters = false;
+            if (result.success && result.characters && result.characters.length > 0) {
+                // 合并AI角色和默认角色，AI角色在前，并按name去重
+                const aiCharacters = result.characters;
+                gameState.aiRecommendedCharacters = aiCharacters;
+                
+                // 按name去重合并，AI角色在前
+                const seen = new Set();
+                const mergedCharacters = [];
+                
+                // 先添加AI角色
+                for (const char of aiCharacters) {
+                    if (!seen.has(char.name)) {
+                        seen.add(char.name);
+                        mergedCharacters.push({
+                            ...char,
+                            isAIRecommended: true // 标记为AI推荐
+                        });
+                    }
+                }
+                
+                // 再添加默认角色
+                for (const char of defaultCharacters) {
+                    if (!seen.has(char.name)) {
+                        seen.add(char.name);
+                        mergedCharacters.push(char);
+                    }
+                }
+                
+                gameState.characters = mergedCharacters;
+            }
+            renderCharacters();
+        }).catch(error => {
+            console.error('获取AI角色失败:', error);
+            gameState.isLoadingAICharacters = false;
+            renderCharacters();
+        });
+        
     } catch (error) {
         console.error('选择章节失败:', error);
+        hideChapterLoadingScreen();
         alert('加载角色失败，请重试');
-    } finally {
-        showLoading(false);
     }
+}
+
+/**
+ * 显示章节加载动画（10秒倒计时）
+ */
+function showChapterLoadingScreen(chapter) {
+    // 移除已存在的加载屏幕
+    hideChapterLoadingScreen();
+    
+    const loadingScreen = document.createElement('div');
+    loadingScreen.id = 'chapterLoadingScreen';
+    loadingScreen.className = 'fixed inset-0 bg-gradient-to-br from-amber-900 via-orange-800 to-red-900 z-50 flex items-center justify-center';
+    loadingScreen.innerHTML = `
+        <div class="text-center text-white px-8">
+            <div class="mb-8">
+                <i class="fas fa-book-open text-6xl text-yellow-300 animate-pulse"></i>
+            </div>
+            <h2 class="text-3xl font-bold mb-4">正在进入</h2>
+            <h3 class="text-2xl text-yellow-300 mb-6">${chapter.displayTitle}</h3>
+            <div class="mb-6">
+                <div class="w-64 h-2 bg-white/20 rounded-full mx-auto overflow-hidden">
+                    <div id="loadingProgress" class="h-full bg-gradient-to-r from-yellow-400 to-orange-500 rounded-full transition-all duration-1000" style="width: 0%"></div>
+                </div>
+            </div>
+            <p class="text-lg text-white/80 mb-2">AI正在为您推荐本章节角色...</p>
+            <p id="loadingCountdown" class="text-sm text-white/60">预计等待 10 秒</p>
+        </div>
+    `;
+    document.body.appendChild(loadingScreen);
+    
+    // 启动进度条动画和倒计时
+    let countdown = 10;
+    const progressBar = document.getElementById('loadingProgress');
+    const countdownText = document.getElementById('loadingCountdown');
+    
+    const interval = setInterval(() => {
+        countdown--;
+        if (progressBar) {
+            progressBar.style.width = `${(10 - countdown) * 10}%`;
+        }
+        if (countdownText) {
+            countdownText.textContent = countdown > 0 ? `预计等待 ${countdown} 秒` : '即将进入...';
+        }
+        if (countdown <= 0) {
+            clearInterval(interval);
+        }
+    }, 1000);
+    
+    // 保存interval引用以便清理
+    loadingScreen.dataset.intervalId = interval;
+}
+
+/**
+ * 隐藏章节加载动画
+ */
+function hideChapterLoadingScreen() {
+    const loadingScreen = document.getElementById('chapterLoadingScreen');
+    if (loadingScreen) {
+        // 清理定时器
+        if (loadingScreen.dataset.intervalId) {
+            clearInterval(parseInt(loadingScreen.dataset.intervalId));
+        }
+        loadingScreen.remove();
+    }
+}
+
+/**
+ * 生成loading占位卡片HTML
+ */
+function generateLoadingCard(index) {
+    const isFirst = index === 0;
+    const badgeText = isFirst ? '推荐' : 'AI推荐';
+    const badgeIcon = isFirst ? 'fa-star' : 'fa-magic';
+    const badgeColor = isFirst ? 'from-yellow-400 to-orange-500' : 'from-blue-400 to-purple-500';
+    const ringClass = isFirst ? 'ring-2 ring-yellow-400' : '';
+    
+    return `
+        <div class="character-card bg-white rounded-2xl shadow-lg overflow-hidden ${ringClass} animate-pulse">
+            <div class="relative h-48 overflow-hidden bg-gradient-to-br from-gray-200 to-gray-300">
+                <div class="absolute top-2 left-2 bg-gradient-to-r ${badgeColor} text-white text-xs px-2 py-1 rounded-full shadow-lg z-10">
+                    <i class="fas ${badgeIcon} mr-1"></i>${badgeText}
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <i class="fas fa-spinner fa-spin text-4xl text-gray-400"></i>
+                </div>
+            </div>
+            <div class="p-6">
+                <div class="h-8 bg-gray-200 rounded mb-2"></div>
+                <div class="h-4 bg-gray-200 rounded w-1/2 mb-3"></div>
+                <div class="h-4 bg-gray-200 rounded mb-4"></div>
+                <div class="flex flex-wrap gap-2 mb-4">
+                    <div class="h-6 w-16 bg-gray-200 rounded-full"></div>
+                    <div class="h-6 w-16 bg-gray-200 rounded-full"></div>
+                    <div class="h-6 w-16 bg-gray-200 rounded-full"></div>
+                </div>
+                <div class="h-12 bg-gray-200 rounded-xl"></div>
+            </div>
+        </div>
+    `;
 }
 
 /**
@@ -397,9 +543,35 @@ function showPhase(phase) {
 function renderCharacters() {
     if (!elements.characterGrid) return;
     
-    elements.characterGrid.innerHTML = gameState.characters.map(char => `
-        <div class="character-card bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all hover:shadow-2xl" data-character-id="${char.id}">
+    let html = '';
+    
+    // 如果正在加载AI角色，先显示2个loading占位卡片
+    if (gameState.isLoadingAICharacters) {
+        html += generateLoadingCard(0); // 推荐位置
+        html += generateLoadingCard(1); // AI推荐位置
+    }
+    
+    // 渲染真实角色卡片
+    html += gameState.characters.map((char, index) => {
+        // 计算实际显示位置（如果有loading卡片，真实角色从第3个位置开始）
+        const displayIndex = gameState.isLoadingAICharacters ? index + 2 : index;
+        
+        // 第一个AI推荐的角色显示"推荐"标识
+        const isFirstRecommended = index === 0 && char.isAIRecommended;
+        const recommendBadge = isFirstRecommended ? 
+            `<div class="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-10">
+                <i class="fas fa-star mr-1"></i>推荐
+            </div>` : '';
+        const aiRecommendedBadge = char.isAIRecommended && !isFirstRecommended ? 
+            `<div class="absolute top-2 left-2 bg-gradient-to-r from-blue-400 to-purple-500 text-white text-xs px-2 py-1 rounded-full shadow-lg z-10">
+                <i class="fas fa-magic mr-1"></i>AI推荐
+            </div>` : '';
+        
+        return `
+        <div class="character-card bg-white rounded-2xl shadow-lg overflow-hidden transform transition-all hover:shadow-2xl ${isFirstRecommended ? 'ring-2 ring-yellow-400' : ''}" data-character-id="${char.id}">
             <div class="relative h-48 overflow-hidden">
+                ${recommendBadge}
+                ${aiRecommendedBadge}
                 <img src="${char.avatar}" alt="${char.name}" class="w-full h-full object-cover" onerror="this.src='https://via.placeholder.com/200?text=${encodeURIComponent(char.name)}'">
                 <div class="absolute inset-0 bg-gradient-to-t ${char.color || 'from-orange-400 to-red-500'} opacity-30"></div>
             </div>
@@ -417,7 +589,9 @@ function renderCharacters() {
                 </button>
             </div>
         </div>
-    `).join('');
+    `}).join('');
+    
+    elements.characterGrid.innerHTML = html;
 }
 
 /**
@@ -460,8 +634,34 @@ async function startGame() {
     // 切换界面
     showPhase('gamePlay');
 
+    // 显示当前章回标题
+    if (elements.currentChapterTitle && gameState.selectedChapter) {
+        elements.currentChapterTitle.textContent = gameState.selectedChapter.displayTitle;
+    }
+
     // 显示角色信息
     updateCharacterInfo();
+
+    // 判断角色是否为AI推荐角色（即是否在本章节中存在）
+    // AI推荐的角色一定是章节中存在的，默认角色可能不在章节中
+    const isAIRecommended = gameState.aiRecommendedCharacters.some(
+        c => c.name === gameState.selectedCharacter.name
+    );
+    
+    // 唐僧师徒四人（含白龙马）的ID列表，这些角色不需要显示演绎提示
+    const mainCharacterIds = ['tangseng', 'wukong', 'bajie', 'shaseng', 'bailongma', 'shawujing', 'tangxuanzeng', 'tangsanzang', 'sunwukong', 'qitiandasheng', 'zhubajie', 'zhuganglie'];
+    const mainCharacterNames = ['唐僧', '悟空', '八戒', '沙僧', '白龙马', '沙悟净', '唐三藏', '唐玄奘', '孙悟空', '齐天大圣', '猪八戒'];
+    const isMainCharacter = mainCharacterNames.includes(gameState.selectedCharacter.name);
+    
+    // 只有当角色既不是AI推荐，也不是唐僧师徒四人时，才显示演绎提示
+    if (elements.characterNotInChapterTip) {
+        if (!isAIRecommended && !isMainCharacter && gameState.aiRecommendedCharacters.length > 0) {
+            // 角色不在AI推荐列表中，且不是主角团，说明该角色可能不在本章节中
+            elements.characterNotInChapterTip.classList.remove('hidden');
+        } else {
+            elements.characterNotInChapterTip.classList.add('hidden');
+        }
+    }
 
     // 加载第一步故事（使用流式输出）
     await loadStoryStream();
@@ -530,6 +730,7 @@ async function loadStoryStream(userChoice = null) {
     if (elements.originalPlotBox) {
         elements.originalPlotBox.classList.add('hidden');
     }
+    // 注意：characterNotInChapterTip 的显示/隐藏在 startGame 时已判断，后续步骤保持原状态
     if (elements.optionsContainer) {
         elements.optionsContainer.innerHTML = '<p class="text-gray-400 text-center"><i class="fas fa-spinner fa-spin mr-2"></i>等待故事生成完成...</p>';
     }
@@ -810,6 +1011,8 @@ function renderStoryElements(storyData) {
         elements.storyTitle.textContent = storyData.title;
     }
 
+    // 注意：characterNotInChapterTip 的显示/隐藏在 startGame 时已判断，此处不再处理
+
     // 反馈信息（如果用户选择不合理）
     if (storyData.feedback && storyData.feedback.trim()) {
         if (elements.feedbackBox) {
@@ -870,6 +1073,8 @@ function renderFinalStory(storyData) {
         if (elements.storyTitle) {
             elements.storyTitle.textContent = storyData.title;
         }
+
+        // 注意：characterNotInChapterTip 的显示/隐藏在 startGame 时已判断，此处不再处理
 
         // 内容
         if (elements.storyContent) {
@@ -1005,6 +1210,8 @@ function renderStory(storyData) {
     if (elements.storyTitle) {
         elements.storyTitle.textContent = storyData.title;
     }
+
+    // 注意：characterNotInChapterTip 的显示/隐藏在 startGame 时已判断，此处不再处理
 
     // 内容（添加动画效果）
     if (elements.storyContent) {

@@ -155,7 +155,7 @@ def build_character_generation_prompt(chapter_id, chapter_title):
 {chapter_summary}
 
 ## 输出要求
-请根据章节内容，选择3～5个最适合该章节剧情的角色，（按照关联度高到低排序，不要多于5个）。每个角色需要包含以下信息：
+请根据章节内容，选择2个最适合该章节剧情的角色，（按照关联度高到低排序），角色需要包含以下信息：
 - id: 角色唯一标识（英文）
 - name: 角色名称
 - role: 角色身份
@@ -176,12 +176,12 @@ def build_character_generation_prompt(chapter_id, chapter_title):
 - 牛魔王: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/936a2386-d3e7-429f-bf9d-ca036012bb33/image_1766338091_1_3.jpg
 - 红孩儿: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/caa27472-9f2e-4196-85c7-d48f8ef45763/image_1766338098_1_3.jpg
 - 其他角色可使用孙悟空或唐僧的头像
-
+""" + """
 ## 输出格式（严格JSON）
 ```json
-{{
+{
     "characters": [
-        {{
+        {
             "id": "tangseng",
             "name": "唐僧",
             "role": "取经领队",
@@ -191,13 +191,15 @@ def build_character_generation_prompt(chapter_id, chapter_title):
             "secret": "角色终极目标",
             "traits": ["慈悲", "执着", "善良"],
             "color": "from-yellow-400 to-orange-500"
-        }}
+        }
     ],
     "chapterContext": "章节剧情概要标题，【第5回：大闹天宫】"
-}}
+}
 ```
-
-请直接输出JSON，不要输出其他内容，不要走思考模型，尽可能快速总结输出"""
+注意：
+ - 最多选择2个最适合该章节剧情的角色
+ - json需要完整，注意括号匹配和json格式
+ - 请直接输出JSON，不要输出其他内容："""
     
     return prompt
 
@@ -221,6 +223,9 @@ def build_story_prompt(request_data: dict) -> str:
     
     # 获取章节原文作为上下文
     chapter_summary = get_chapter_summary(chapter_id, 1500)
+    
+    # 获取角色名称，用于判断角色是否在章节中
+    character_name = character.get('name', '')
     
     # 构建角色信息
     character_info = f"""
@@ -290,6 +295,8 @@ def build_story_prompt(request_data: dict) -> str:
 2. 学习要点必须基于玩家的实际游戏历史，不要编造
 3. 结局要符合原著精神，同时体现玩家的选择
 4. 必须准确反映玩家扮演的角色和经历的章节
+5. 如果角色选择非章节中存在的，则结合角色进行合理的故事创作，同时在创作前先提示`【当前选择角色在章节中不存在，已创作以下故事仅供学习参考~，注意非本章节内容】`(在输出的content内容中的第一行)
+6. 无论什么时候都要求：符合原著精神，能帮助读者理解名著，具有教育意义。
 
 {chapter_info}
 {character_info}
@@ -317,7 +324,8 @@ def build_story_prompt(request_data: dict) -> str:
         "要总结玩家的选择倾向（符合原著 vs 创新选择）",
         "要列举学到的具体名言（如果有）",
         "不要提及游戏中没有出现的角色（如白骨精、牛魔王等）"
-    ]
+    ],
+    "characterInChapter": true或false（判断角色'{character_name}'是否在本章节《{chapter_title}》中出现过，如果原著章节内容中提到了该角色则为true，否则为false）
 }}
 
 请开始生成最终总结："""
@@ -357,7 +365,8 @@ def build_story_prompt(request_data: dict) -> str:
     "originalPlot": "本段对应原著的情节概要（帮助用户了解原著）",
     "isEnd": false,
     "ending": "",
-    "learningPoints": []
+    "learningPoints": [],
+    "characterInChapter": true或false（判断角色'{character_name}'是否在本章节《{chapter_title}》中出现过，如果原著章节内容中提到了该角色则为true，否则为false）
 }}
 
 请开始生成故事："""
@@ -425,7 +434,7 @@ def generate_stream(request_data: dict):
             }
         
         yield f"data: {json.dumps(done_data, ensure_ascii=False)}\n\n"
-        
+        logger.info(f"full content sent: {full_content}")
     except Exception as e:
         logger.error(f"Error during streaming: {str(e)}")
         error_data = {
@@ -456,6 +465,7 @@ def extract_json(content: str) -> dict:
     matches = re.findall(json_pattern, content)
     
     for match in matches:
+        logger.info("Found JSON in content mastch-1")
         try:
             return json.loads(match)
         except:
@@ -463,6 +473,7 @@ def extract_json(content: str) -> dict:
 
     matches2 = re.search(r'```json\s*([\s\S]*?)\s*```', content)
     if matches2:
+        logger.info("Found JSON in content mastch-2")
         try:
             return json.loads(matches2.group(1))
         except:
@@ -548,7 +559,7 @@ def get_chapter_characters(chapter_id):
         # 构建提示词
         prompt = build_character_generation_prompt(chapter_id, chapter['title'])
         
-        # 调用AI生成角色
+        # 调用AI生成角色（非流式）
         response = Application.call(
             api_key=API_KEY,
             app_id=APP_ID,
@@ -556,9 +567,9 @@ def get_chapter_characters(chapter_id):
             stream=False
         )
         
+        # 检查响应状态
         if response.status_code != HTTPStatus.OK:
             logger.error(f"AI call failed: {response.message}")
-            logger.info(f"AI call failed: {response.message}")
             # 返回默认角色列表
             return jsonify({
                 'success': True,
@@ -567,32 +578,44 @@ def get_chapter_characters(chapter_id):
                 'fromCache': True
             })
         
-        # 解析AI响应
-        content = response.output.text
-        logger.info(f"AI response characters: {content}")
-        parsed_data = extract_json(content)
+        # 获取完整内容
+        full_content = response.output.text
         
+        # 解析AI响应
+        logger.info(f"AI response characters (length={len(full_content)}): {full_content}")
+        parsed_data = extract_json(full_content)
+        
+        # 获取AI推荐的角色
+        ai_characters = parsed_data.get('characters', [])
+        
+        # 使用name去重，保持顺序
+        seen_names = set()
+        unique_characters = []
+        for char in ai_characters:
+            name = char.get('name', '')
+            if name and name not in seen_names:
+                seen_names.add(name)
+                unique_characters.append(char)
+        
+        # 仅返回AI推荐的角色列表（去重后）
         return jsonify({
             'success': True,
-            'characters': parsed_data.get('characters', get_default_characters(chapter_id, chapter['title'])),
-            'chapterContext': parsed_data.get('chapterContext', f"第{chapter_id}回：{chapter['title']}"),
-            'fromCache': False
+            'characters': unique_characters
         })
         
     except Exception as e:
         logger.error(f"Error generating characters for chapter {chapter_id}: {str(e)}")
-        # 返回默认角色
+        # 返回空角色列表，前端使用默认角色
         return jsonify({
             'success': True,
-            'characters': get_default_characters(chapter_id, ''),
-            'error': str(e),
-            'fromCache': True
+            'characters': [],
+            'error': str(e)
         }), 200
 
 
 def get_default_characters(chapter_id, chapter_title):
     """
-    获取默认角色列表（当AI生成失败时使用）
+    获取默认角色列表（唐僧师徒四人）
     """
     return [
         {
@@ -627,6 +650,17 @@ def get_default_characters(chapter_id, chapter_title):
             "secret": "虽然贪吃好色，但关键时刻从不退缩。",
             "traits": ["憨厚", "幽默", "贪吃", "重情义"],
             "color": "from-pink-400 to-rose-500"
+        },
+        {
+            "id": "wujing",
+            "name": "沙悟净",
+            "role": "卷帘大将",
+            "avatar": "https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/caa27472-9f2e-4196-85c7-d48f8ef45763/image_1766338070_1_1.jpg",
+            "description": "忠厚老实的三师弟，任劳任怨挑担前行",
+            "background": f"在第{chapter_id}回《{chapter_title}》中，沙僧默默挑担保护师父。",
+            "secret": "曾是天庭卷帘大将，因失手打碎琉璃盏被贬下凡。",
+            "traits": ["忠诚", "勤劳", "稳重", "少言寡语"],
+            "color": "from-blue-400 to-cyan-500"
         }
     ]
 

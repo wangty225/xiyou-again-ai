@@ -103,14 +103,17 @@ export async function fetchChapterCharacters(chapterId) {
         }
 
         const data = await response.json();
-        return data;
+        // 后端仅返回 { success: true, characters: [...] }
+        return {
+            success: data.success,
+            characters: data.characters || []
+        };
     } catch (error) {
         console.error('获取章节角色失败:', error);
-        // 返回默认角色
+        // 返回空列表，让前端使用默认角色
         return {
             success: true,
-            characters: getDefaultCharacters(),
-            fromFallback: true
+            characters: []
         };
     }
 }
