@@ -167,15 +167,15 @@ def build_character_generation_prompt(chapter_id, chapter_title):
 - color: 渐变色CSS类（如 from-yellow-400 to-orange-500）
 
 ## 预设头像URL对照
-- 唐僧: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/648a8ed9-45dc-4428-89d7-c398040ea606/image_1766338050_1_1.jpg
-- 孙悟空: http://49.232.166.157:8002/assets/wukong_small.png
-- 猪八戒: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/528d382e-af15-477f-9bc8-3fb9cd359934/image_1766338060_1_1.jpg
-- 沙悟净: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/b47a2824-3c54-4ee5-8992-50361ff33ac9/image_1766338064_1_1.jpg
-- 白龙马: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/814abf7c-df54-476a-bdb5-22fdbcef5e89/image_1766338069_1_1.jpg
-- 白骨精: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/ac0c5bd2-74a1-4147-9b51-36900863d5ba/image_1766338076_1_3.jpg
-- 牛魔王: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/936a2386-d3e7-429f-bf9d-ca036012bb33/image_1766338091_1_3.jpg
-- 红孩儿: https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/caa27472-9f2e-4196-85c7-d48f8ef45763/image_1766338098_1_3.jpg
-- 其他角色可使用孙悟空或唐僧的头像
+- 唐僧: http://49.232.166.157:8002/assets/tangseng.png
+- 孙悟空: http://49.232.166.157:8002/assets/wukong.png
+- 猪八戒: http://49.232.166.157:8002/assets/bajie.png
+- 沙悟净: http://49.232.166.157:8002/assets/shaseng.png
+- 白龙马: http://49.232.166.157:8002/assets/bailongma.png
+- 白骨精: http://49.232.166.157:8002/assets/baigujing.png
+- 牛魔王: http://49.232.166.157:8002/assets/niumowang.png
+- 红孩儿: http://49.232.166.157:8002/assets/honghaier.png
+- 其他角色: http://49.232.166.157:8002/assets/default.png
 """ + """
 ## 输出格式（严格JSON）
 ```json
@@ -621,7 +621,7 @@ def get_default_characters(chapter_id, chapter_title):
             "id": "tangseng",
             "name": "唐僧",
             "role": "取经领队",
-            "avatar": "https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/648a8ed9-45dc-4428-89d7-c398040ea606/image_1766338050_1_1.jpg",
+            "avatar": "http://49.232.166.157:8002/assets/tangseng.png",
             "description": "慈悲为怀的取经人，心怀天下苍生",
             "background": f"在第{chapter_id}回《{chapter_title}》中，唐僧继续他的取经之旅。",
             "secret": "身负如来重托，必须历经九九八十一难方能取得真经。",
@@ -632,7 +632,7 @@ def get_default_characters(chapter_id, chapter_title):
             "id": "wukong",
             "name": "孙悟空",
             "role": "齐天大圣",
-            "avatar": "http://49.232.166.157:8002/assets/wukong_small.png",
+            "avatar": "http://49.232.166.157:8002/assets/wukong.png",
             "description": "神通广大的美猴王，火眼金睛识妖魔",
             "background": f"在第{chapter_id}回《{chapter_title}》中，悟空保护师父继续西行。",
             "secret": "头戴紧箍咒，受制于唐僧，但内心渴望自由。",
@@ -643,7 +643,7 @@ def get_default_characters(chapter_id, chapter_title):
             "id": "bajie",
             "name": "猪八戒",
             "role": "天蓬元帅",
-            "avatar": "https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/528d382e-af15-477f-9bc8-3fb9cd359934/image_1766338060_1_1.jpg",
+            "avatar": "http://49.232.166.157:8002/assets/bajie.png",
             "description": "憨厚可爱的二师兄，好吃懒做却心地善良",
             "background": f"在第{chapter_id}回《{chapter_title}》中，八戒跟随师父西行。",
             "secret": "虽然贪吃好色，但关键时刻从不退缩。",
@@ -654,7 +654,7 @@ def get_default_characters(chapter_id, chapter_title):
             "id": "wujing",
             "name": "沙悟净",
             "role": "卷帘大将",
-            "avatar": "https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/caa27472-9f2e-4196-85c7-d48f8ef45763/image_1766338070_1_1.jpg",
+            "avatar": "http://49.232.166.157:8002/assets/shaseng.png",
             "description": "忠厚老实的三师弟，任劳任怨挑担前行",
             "background": f"在第{chapter_id}回《{chapter_title}》中，沙僧默默挑担保护师父。",
             "secret": "曾是天庭卷帘大将，因失手打碎琉璃盏被贬下凡。",

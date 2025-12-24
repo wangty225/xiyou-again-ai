@@ -94,7 +94,7 @@ const mockCharacter = {
     id: 'puti',
     name: '菩提祖师',
     role: '世外高人',
-    avatar: 'https://zhiyan-ai-agent-with-1258344702.cos.ap-guangzhou.tencentcos.cn/with/648a8ed9-45dc-4428-89d7-c398040ea606/image_1766338050_1_1.jpg',
+    avatar: 'http://49.232.166.157:8002/assets/default.png',
     description: '隐居方寸山的神秘仙师，深谙三教真谛。',
     background: '居住在西牛贺洲灵台方寸山斜月三星洞，精通儒释道三家妙理，门下弟子众多。',
     traits: ['智慧', '神秘', '慈悲', '严厉'],
