@@ -1688,6 +1688,21 @@ async function exportStoryAsImage() {
             throw new Error('找不到要导出的内容');
         }
         
+        // 获取故事回顾内容容器，临时移除高度限制
+        const storyReviewContent = document.getElementById('storyReviewContent');
+        let originalMaxHeight = '';
+        let originalOverflow = '';
+        
+        if (storyReviewContent) {
+            // 保存原始样式
+            originalMaxHeight = storyReviewContent.style.maxHeight;
+            originalOverflow = storyReviewContent.style.overflow;
+            
+            // 移除高度限制和滚动条，让所有内容可见
+            storyReviewContent.style.maxHeight = 'none';
+            storyReviewContent.style.overflow = 'visible';
+        }
+        
         // 生成图片
         const canvas = await html2canvas(gameEndSection, {
             backgroundColor: '#ffffff',
@@ -1695,6 +1710,12 @@ async function exportStoryAsImage() {
             logging: false,
             useCORS: true
         });
+        
+        // 恢复原始样式
+        if (storyReviewContent) {
+            storyReviewContent.style.maxHeight = originalMaxHeight;
+            storyReviewContent.style.overflow = originalOverflow;
+        }
         
         // 下载图片
         const link = document.createElement('a');
@@ -1714,6 +1735,13 @@ async function exportStoryAsImage() {
     } catch (error) {
         console.error('导出失败:', error);
         alert('导出失败，请重试');
+        
+        // 确保恢复样式
+        const storyReviewContent = document.getElementById('storyReviewContent');
+        if (storyReviewContent) {
+            storyReviewContent.style.maxHeight = '';
+            storyReviewContent.style.overflow = '';
+        }
         
         if (exportBtn) {
             exportBtn.innerHTML = '<i class="fas fa-download mr-2"></i>导出图片';
