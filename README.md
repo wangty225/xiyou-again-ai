@@ -8,7 +8,7 @@
 [![JavaScript](https://img.shields.io/badge/JavaScript-ES6+-yellow?style=flat-square&logo=javascript)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)](LICENSE)
 
-**化身西游人物，「AI第一人称演绎」独属你的西游八十一难**
+**化身西游人物，「AI第一人称演绎」独属你的九九八十一难**
 
 [在线体验](http://49.232.166.157:8002/) · [视频演示](#-演示视频) · [快速开始](#-快速开始)
 
