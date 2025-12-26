@@ -846,7 +846,7 @@ function typewriterEffectIncremental(fullText, element, speed = 30) {
             
             // 更新显示内容（包含光标）
             const displayedText = currentText.substring(0, gameState.displayedTextLength);
-            element.innerHTML = formatTextWithLineBreaks(displayedText) + '<span class="typewriter-cursor">█</span>';
+            element.innerHTML = formatTextWithLineBreaks(displayedText) + '<span class="typewriter-cursor">✍️</span>';
             
             // 自动滚动
             element.scrollTop = element.scrollHeight;

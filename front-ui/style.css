@@ -216,8 +216,8 @@ button:disabled {
 /* 打字机光标 - 黑色方块 */
 .typewriter-cursor {
     display: inline-block;
-    background-color: #000;
-    color: #000;
+    /*background-color: #000;*/
+    /*color: #000;*/
     margin-left: 2px;
     animation: cursor-blink 0.8s infinite;
 }
