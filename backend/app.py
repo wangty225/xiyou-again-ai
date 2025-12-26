@@ -261,7 +261,7 @@ def build_story_prompt(request_data: dict) -> str:
             
             # 安全获取故事内容
             story_content = story_info.get('content', '')
-            content_preview = story_content[:150] if story_content else ''
+            content_preview = story_content[:1536] if story_content else ''
             
             history_summary += f"""
 ### 第{h.get('step', 0)}步

@@ -628,7 +628,7 @@ async function startGame() {
     if (!gameState.selectedCharacter || !gameState.selectedChapter) return;
 
     gameState.isPlaying = true;
-    gameState.currentStep = 1;
+    gameState.currentStep = 0;
     gameState.storyHistory = [];
 
     // 切换界面
@@ -702,6 +702,16 @@ function updateProgress() {
  * 加载故事内容（流式输出版本）
  */
 async function loadStoryStream(userChoice = null) {
+
+    // 更新storyHistory上一步的choice
+    if (gameState.storyHistory.length > 0) {
+        const lastStep = gameState.storyHistory[gameState.storyHistory.length - 1];
+        if (lastStep && !lastStep.choice) {
+            lastStep.choice = userChoice;
+        }
+    }
+
+    gameState.currentStep++;
     showStreamingLoading(true);
     gameState.isStreaming = true;
     
@@ -719,7 +729,7 @@ async function loadStoryStream(userChoice = null) {
         elements.storyTitle.textContent = '故事生成中...';
     }
     if (elements.storyContent) {
-        elements.storyContent.innerHTML = '<span class="typewriter-cursor">█</span>';
+        elements.storyContent.innerHTML = '<span class="typewriter-cursor">✍️</span>';
     }
     if (elements.literaryQuote) {
         elements.literaryQuote.classList.add('hidden');
@@ -775,11 +785,11 @@ async function loadStoryStream(userChoice = null) {
         // 流式输出完成，使用解析后的数据渲染最终结果
         if (lastParsedData) {
             const storyData = formatAIResponse(lastParsedData);
-            
+
             // 保存到历史
             gameState.storyHistory.push({
                 step: gameState.currentStep,
-                choice: userChoice,
+                choice: null,  // 此刻用户还没有选择
                 story: storyData
             });
 
@@ -1304,9 +1314,6 @@ function renderOptions(options) {
  */
 async function handleChoice(choice) {
     if (!gameState.isPlaying || gameState.isStreaming) return;
-
-    // 增加步数
-    gameState.currentStep++;
 
     // 加载下一步故事（使用流式输出）
     await loadStoryStream(choice);
