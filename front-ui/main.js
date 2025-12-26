@@ -872,7 +872,7 @@ function typewriterEffectIncremental(fullText, element, speed = 30) {
     
     // 如果是第一次打字，清空内容并开始
     if (gameState.displayedTextLength === 0) {
-        element.innerHTML = '<span class="typewriter-cursor">█</span>';
+        element.innerHTML = '<span class="typewriter-cursor">✍️</span>';
         gameState.isTyping = true;
         typeNextChar();
     } else if (!gameState.isTyping) {
@@ -898,7 +898,7 @@ function typewriterEffectComplete(text, element, speed = 20) {
                 
                 // 更新显示内容（包含光标）
                 const displayedText = text.substring(0, index);
-                element.innerHTML = formatTextWithLineBreaks(displayedText) + '<span class="typewriter-cursor">█</span>';
+                element.innerHTML = formatTextWithLineBreaks(displayedText) + '<span class="typewriter-cursor">✍️</span>';
                 
                 // 自动滚动
                 element.scrollTop = element.scrollHeight;
